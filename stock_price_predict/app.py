@@ -16,7 +16,12 @@ if st.button("Predict"):
     if stock:
 
         # Step 1: Fetch data
-        data = get_stock_data(stock)
+        with st.spinner("Fetching data..."):
+            data = get_stock_data(stock)
+        
+        if data.empty:
+            st.error("Invalid stock symbol")
+            st.stop()
 
         # Step 2: Preprocess
         X, y = prepare_data(data)
@@ -34,6 +39,9 @@ if st.button("Predict"):
         # Show result
         st.subheader("🔮 Prediction Result")
         st.write(f"Predicted Close Price: {prediction[0][0]:.2f}")
+
+        st.subheader("💰 Current Price")
+        st.write(data["Close"].iloc[-1])
 
         # Show chart
         st.subheader("📈 Stock Close Price Chart")
