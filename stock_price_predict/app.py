@@ -3,7 +3,7 @@ import yfinance as yf
 
 from data.fetch_data import get_stock_data
 from utils.preprocess import prepare_data
-from model.train_model import train_model
+from model.train_model import train_models
 from model.load_model import load_model
 
 st.title("📊 Stock Price Predictor App")
@@ -26,15 +26,25 @@ if st.button("Predict"):
         # Step 2: Preprocess
         X, y = prepare_data(data)
 
-        # Step 3: Load or Train model (THIS PART 👇)
-        try:
-            model = load_model()
-        except:
-            model = train_model(X, y)
+        # Step 3: Train models (Linear + Random Forest)
+        lr_model, rf_model, lr_error, rf_error = train_models(X, y)
 
-        # Step 4: Make prediction (latest row)
+        # Show comparison
+        st.subheader("📊 Model Comparison")
+        st.write(f"Linear Regression Error: {lr_error:.2f}")
+        st.write(f"Random Forest Error: {rf_error:.2f}")
+
+        # Step 4: Choose best model
+        if rf_error < lr_error:
+            best_model = rf_model
+            st.success("✅ Random Forest is better")
+        else:
+            best_model = lr_model
+            st.success("✅ Linear Regression is better")
+
+        # Step 5: Prediction
         latest_data = X.tail(1)
-        prediction = model.predict(latest_data)
+        prediction = best_model.predict(latest_data)
 
         # Show result
         st.subheader("🔮 Prediction Result")
