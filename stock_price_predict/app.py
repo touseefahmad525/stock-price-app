@@ -3,7 +3,7 @@ import yfinance as yf
 
 from data.fetch_data import get_stock_data
 from utils.preprocess import prepare_data
-from model.train_model import train_models
+from model.train_models import train_models
 from model.load_model import load_model
 
 st.title("📊 Stock Price Predictor App")
