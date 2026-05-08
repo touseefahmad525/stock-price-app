@@ -1,11 +1,31 @@
 import numpy as np
 import pandas as pd
 import streamlit as st
+from sklearn.model_selection import train_test_split
 
 from data.fetch_data import get_stock_data
 from model.train_models import train_models
 from utils.future_predict import predict_future_prices
 from utils.preprocess import prepare_data
+from utils.visualizations import (
+    plot_candlestick_with_volume,
+    plot_feature_importance,
+    plot_regression_predictions,
+)
+
+
+st.set_page_config(
+    page_title="Stock ML Trading Dashboard",
+    page_icon="chart_with_upwards_trend",
+    layout="wide",
+)
+
+
+PLOTLY_CONFIG = {
+    "displayModeBar": True,
+    "scrollZoom": True,
+    "responsive": True,
+}
 
 
 def to_float(value, default=0.0):
@@ -78,7 +98,22 @@ def percentage_change(future_price, current_price):
     return to_float(((future_price - current_price) / current_price) * 100)
 
 
-st.title("📊 Stock Price Predictor App")
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background: #0b1120;
+        color: #e5e7eb;
+    }
+    div[data-testid="stMetricValue"] {
+        color: #f8fafc;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.title("Stock ML Trading Dashboard")
 
 stock = st.text_input("Enter Stock Symbol (e.g. AAPL, TSLA, MSFT)")
 
@@ -87,7 +122,7 @@ if st.button("Predict"):
         st.warning("Please enter a stock symbol")
         st.stop()
 
-    with st.spinner("Fetching data..."):
+    with st.spinner("Fetching market data..."):
         data = get_stock_data(stock)
 
     if data.empty:
@@ -97,7 +132,7 @@ if st.button("Predict"):
     data = normalize_stock_data(data, stock)
 
     if data.empty or "Close" not in data.columns:
-        st.error("Could not load valid price data for this symbol")
+        st.error("Could not load valid OHLCV data for this symbol")
         st.stop()
 
     X, y = prepare_data(data)
@@ -112,36 +147,23 @@ if st.button("Predict"):
     rf_error = to_float(rf_error)
     dt_error = to_float(dt_error)
 
-    st.subheader("📊 Model Comparison")
-    st.write(f"Linear Regression Error: {lr_error:.2f}")
-    st.write(f"Random Forest Error: {rf_error:.2f}")
-    st.write(f"Decision Tree Error: {dt_error:.2f}")
-
     errors = {
         "Linear Regression": lr_error,
         "Random Forest": rf_error,
         "Decision Tree": dt_error,
     }
-
-    best_model_name = min(errors, key=errors.get)
-    best_model = {
+    models = {
         "Linear Regression": lr_model,
         "Random Forest": rf_model,
         "Decision Tree": dt_model,
-    }[best_model_name]
+    }
 
-    st.success(f"✅ {best_model_name} is the best model")
+    best_model_name = min(errors, key=errors.get)
+    best_model = models[best_model_name]
 
     latest_data = X.tail(1)
     prediction = to_float(best_model.predict(latest_data))
-
-    st.subheader("🔮 Prediction Result")
-    st.write(f"Predicted Close Price: ${prediction:.2f}")
-
     last_price = to_float(data["Close"].iloc[-1])
-
-    st.subheader("💰 Current Price")
-    st.write(f"${last_price:.2f}")
 
     future = predict_future_prices(last_price)
     future = {
@@ -150,32 +172,80 @@ if st.button("Predict"):
         "30": to_float(future.get("30")),
     }
 
-    st.subheader("📊 Price Predictions")
+    st.subheader("Market Snapshot")
+    metric_cols = st.columns(4)
+    metric_cols[0].metric("Current Price", f"${last_price:.2f}")
+    metric_cols[1].metric("Predicted Close", f"${prediction:.2f}")
+    metric_cols[2].metric("Best Model", best_model_name)
+    metric_cols[3].metric("Best MSE", f"{errors[best_model_name]:.2f}")
+
+    st.subheader("Trading View")
+    st.plotly_chart(
+        plot_candlestick_with_volume(data, title=f"{stock.upper()} OHLCV"),
+        use_container_width=True,
+        config=PLOTLY_CONFIG,
+    )
+
+    st.subheader("Future Price Predictions")
     col1, col2, col3 = st.columns(3)
 
     with col1:
         change_7 = percentage_change(future["7"], last_price)
-        st.markdown("### 📅 7-Day Prediction")
-        st.markdown(f"## ${future['7']:.2f}")
-        st.markdown(f"📈 {change_7:.2f}%")
+        st.metric("7-Day Prediction", f"${future['7']:.2f}", f"{change_7:.2f}%")
         st.progress(0.78)
-        st.write("Confidence: 78%")
+        st.caption("Confidence: 78%")
 
     with col2:
         change_14 = percentage_change(future["14"], last_price)
-        st.markdown("### 📅 14-Day Prediction")
-        st.markdown(f"## ${future['14']:.2f}")
-        st.markdown(f"📈 {change_14:.2f}%")
+        st.metric("14-Day Prediction", f"${future['14']:.2f}", f"{change_14:.2f}%")
         st.progress(0.72)
-        st.write("Confidence: 72%")
+        st.caption("Confidence: 72%")
 
     with col3:
         change_30 = percentage_change(future["30"], last_price)
-        st.markdown("### 📅 30-Day Prediction")
-        st.markdown(f"## ${future['30']:.2f}")
-        st.markdown(f"📈 {change_30:.2f}%")
+        st.metric("30-Day Prediction", f"${future['30']:.2f}", f"{change_30:.2f}%")
         st.progress(0.65)
-        st.write("Confidence: 65%")
+        st.caption("Confidence: 65%")
 
-    st.subheader("📈 Stock Close Price Chart")
-    st.line_chart(data["Close"])
+    st.subheader("ML Model Evaluation")
+    eval_cols = st.columns(3)
+    eval_cols[0].metric("Linear Regression MSE", f"{lr_error:.2f}")
+    eval_cols[1].metric("Random Forest MSE", f"{rf_error:.2f}")
+    eval_cols[2].metric("Decision Tree MSE", f"{dt_error:.2f}")
+
+    _, X_test, _, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.2,
+        random_state=42,
+    )
+    y_pred = best_model.predict(X_test)
+
+    st.plotly_chart(
+        plot_regression_predictions(
+            y_test,
+            y_pred,
+            title=f"{best_model_name}: Actual vs Predicted Close",
+        ),
+        use_container_width=True,
+        config=PLOTLY_CONFIG,
+    )
+
+    feature_col1, feature_col2 = st.columns(2)
+    with feature_col1:
+        rf_importance = plot_feature_importance(
+            rf_model,
+            X.columns,
+            title="Random Forest Feature Importance",
+        )
+        if rf_importance is not None:
+            st.plotly_chart(rf_importance, use_container_width=True, config=PLOTLY_CONFIG)
+
+    with feature_col2:
+        dt_importance = plot_feature_importance(
+            dt_model,
+            X.columns,
+            title="Decision Tree Feature Importance",
+        )
+        if dt_importance is not None:
+            st.plotly_chart(dt_importance, use_container_width=True, config=PLOTLY_CONFIG)
