@@ -27,20 +27,33 @@ if st.button("Predict"):
         X, y = prepare_data(data)
 
         # Step 3: Train models (Linear + Random Forest)
-        lr_model, rf_model, lr_error, rf_error = train_models(X, y)
+        lr_model, rf_model, dt_model,  lr_error, rf_error, dt_error = train_models(X, y)
 
         # Show comparison
         st.subheader("📊 Model Comparison")
         st.write(f"Linear Regression Error: {lr_error:.2f}")
         st.write(f"Random Forest Error: {rf_error:.2f}")
+        st.write(f"Decision Tree Error: {dt_error:.2f}")
 
-        # Step 4: Choose best model
-        if rf_error < lr_error:
-            best_model = rf_model
-            st.success("✅ Random Forest is better")
-        else:
+        # Step 4: Compare all models and pick best one
+        errors = {
+            "Linear Regression": lr_error,
+            "Random Forest": rf_error,
+            "Decision Tree": dt_error
+        }
+
+        # find model with minimum error
+        best_model_name = min(errors, key=errors.get)
+
+        # assign best model
+        if best_model_name == "Linear Regression":
             best_model = lr_model
-            st.success("✅ Linear Regression is better")
+        elif best_model_name == "Random Forest":
+            best_model = rf_model
+        else:
+            best_model = dt_model
+
+        st.success(f"✅ {best_model_name} is the best model")
 
         # Step 5: Prediction
         latest_data = X.tail(1)
