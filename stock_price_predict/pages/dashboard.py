@@ -3,6 +3,8 @@ import streamlit as st
 from pages.charts_analysis import render_chart_content
 from pages.prediction import render_prediction_content
 from utils.app_helpers import build_stock_analysis
+from utils.news_api import get_stock_news
+from utils.sentiment import analyze_sentiment
 
 
 def render_stock_search(current_analysis):
@@ -72,7 +74,42 @@ def render(analysis):
     metric_cols[3].metric("Active Symbol", analysis["stock"])
 
     st.divider()
+
     render_prediction_content(analysis)
 
     st.divider()
+
+    # ✅ ONLY ONE CALL (FIXED)
     render_chart_content(analysis)
+
+    # -----------------------------
+    # 📰 NEWS SENTIMENT ANALYSIS
+    # -----------------------------
+    st.divider()
+    st.subheader("📰 News Sentiment Analysis")
+
+    stock = st.session_state.get("stock_symbol", analysis["stock"])
+
+    try:
+        news_list = get_stock_news(stock)
+
+        if not news_list:
+            st.info("No news found for this stock.")
+        else:
+            sentiment = analyze_sentiment(news_list)
+
+            st.write("### Latest News")
+
+            for item in sentiment["details"]:
+                st.write(f"• {item['news']} → {item['sentiment']}")
+
+            st.write("### Sentiment Summary")
+
+            col1, col2, col3 = st.columns(3)
+
+            col1.metric("👍 Positive", sentiment["positive"])
+            col2.metric("👎 Negative", sentiment["negative"])
+            col3.metric("😐 Neutral", sentiment["neutral"])
+
+    except Exception as e:
+        st.warning(f"Sentiment analysis failed: {e}")
