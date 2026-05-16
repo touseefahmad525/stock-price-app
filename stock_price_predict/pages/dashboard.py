@@ -34,7 +34,6 @@ def render_stock_search(current_analysis):
 
 
 def render(analysis):
-    st.header("Dashboard")
     analysis = render_stock_search(analysis)
 
     if analysis is None:
