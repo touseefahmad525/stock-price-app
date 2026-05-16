@@ -4,5 +4,10 @@ def get_stock_data(stock="AAPL", period="1mo"):
     """
     Fetch stock data from Yahoo Finance
     """
-    data = yf.download(stock, period=period)
+    data = yf.download(
+        stock,
+        period=period,
+        progress=False,
+        timeout=10,
+    )
     return data

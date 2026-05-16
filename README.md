@@ -14,3 +14,6 @@ This project predicts stock closing prices using Machine Learning.
 - Pandas
 - Scikit-learn
 - Streamlit
+
+# run
+streamlit run app.py

@@ -1,6 +1,7 @@
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_squared_error
 
 def train_models(X, y):
@@ -22,4 +23,17 @@ def train_models(X, y):
     rf_pred = rf_model.predict(X_test)
     rf_error = mean_squared_error(y_test, rf_pred)
 
-    return lr_model, rf_model, lr_error, rf_error
+    # Model 3: Decision Tree
+    dt_model = DecisionTreeRegressor(random_state=42)
+    dt_model.fit(X_train, y_train)
+    dt_pred = dt_model.predict(X_test)
+    dt_error = mean_squared_error(y_test, dt_pred)
+
+    return (
+    lr_model,
+    rf_model,
+    dt_model,
+    lr_error,
+    rf_error,
+    dt_error
+    )
