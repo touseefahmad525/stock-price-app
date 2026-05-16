@@ -6,10 +6,13 @@ from utils.app_helpers import build_stock_analysis
 
 
 def render_stock_search(current_analysis):
+    if "stock_input" not in st.session_state:
+        st.session_state["stock_input"] = st.session_state.get("stock_symbol", "")
+
     with st.form("stock_search_form"):
-        stock = st.text_input(
+        st.text_input(
             "Enter Stock Symbol",
-            value=st.session_state.get("stock_symbol", ""),
+            key="stock_input",
             placeholder="AAPL, TSLA, MSFT",
         )
         analyze = st.form_submit_button("Analyze Stock")
@@ -18,6 +21,7 @@ def render_stock_search(current_analysis):
         return current_analysis
 
     st.session_state["has_analyzed"] = True
+    stock = st.session_state.get("stock_input", "").strip().upper()
 
     if not stock:
         st.warning("Please enter a stock symbol")
@@ -25,6 +29,7 @@ def render_stock_search(current_analysis):
 
     analysis = None
     error_message = None
+    st.session_state["analysis"] = None
 
     with st.spinner("Fetching market data and training models..."):
         try:
@@ -40,7 +45,7 @@ def render_stock_search(current_analysis):
         return None
 
     st.session_state["analysis"] = analysis
-    st.session_state["stock_symbol"] = stock.upper().strip()
+    st.session_state["stock_symbol"] = stock
     return analysis
 
 
