@@ -5,7 +5,7 @@ from pages import dashboard, model_comparison
 
 
 st.set_page_config(
-    page_title="Stock ML Trading Dashboard",
+    page_title="Stock Price Predictor",
     page_icon="📈",
     layout="wide",
 )
@@ -41,7 +41,7 @@ def main():
     apply_theme()
     selected_page = render_sidebar()
 
-    st.title("Stock ML Trading Dashboard")
+    st.title("Stock Price Predictor")
 
     analysis = st.session_state.get("analysis")
     PAGE_RENDERERS[selected_page](analysis)
