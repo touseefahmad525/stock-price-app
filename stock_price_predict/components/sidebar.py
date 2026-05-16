@@ -3,8 +3,6 @@ import streamlit as st
 
 PAGES = {
     "Dashboard": "dashboard",
-    "Prediction": "prediction",
-    "Charts / Analysis": "charts_analysis",
     "Model Comparison": "model_comparison",
 }
 

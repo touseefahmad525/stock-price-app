@@ -14,10 +14,11 @@ def render(analysis):
     errors = analysis["errors"]
 
     st.subheader("ML Model Evaluation")
-    eval_cols = st.columns(3)
-    eval_cols[0].metric("Linear Regression MSE", f"{errors['Linear Regression']:.2f}")
-    eval_cols[1].metric("Random Forest MSE", f"{errors['Random Forest']:.2f}")
-    eval_cols[2].metric("Decision Tree MSE", f"{errors['Decision Tree']:.2f}")
+    eval_cols = st.columns(4)
+    eval_cols[0].metric("Best Model", analysis["best_model_name"])
+    eval_cols[1].metric("Linear Regression MSE", f"{errors['Linear Regression']:.2f}")
+    eval_cols[2].metric("Random Forest MSE", f"{errors['Random Forest']:.2f}")
+    eval_cols[3].metric("Decision Tree MSE", f"{errors['Decision Tree']:.2f}")
 
     st.plotly_chart(
         plot_regression_predictions(

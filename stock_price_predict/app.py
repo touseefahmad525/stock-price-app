@@ -1,7 +1,7 @@
 import streamlit as st
 
 from components.sidebar import render_sidebar
-from pages import charts_analysis, dashboard, model_comparison, prediction
+from pages import dashboard, model_comparison
 
 
 st.set_page_config(
@@ -13,8 +13,6 @@ st.set_page_config(
 
 PAGE_RENDERERS = {
     "dashboard": dashboard.render,
-    "prediction": prediction.render,
-    "charts_analysis": charts_analysis.render,
     "model_comparison": model_comparison.render,
 }
 

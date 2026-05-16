@@ -1,5 +1,7 @@
 import streamlit as st
 
+from pages.charts_analysis import render_chart_content
+from pages.prediction import render_prediction_content
 from utils.app_helpers import build_stock_analysis
 
 
@@ -46,8 +48,11 @@ def render(analysis):
     metric_cols = st.columns(4)
     metric_cols[0].metric("Current Price", f"${analysis['last_price']:.2f}")
     metric_cols[1].metric("Predicted Close", f"${analysis['prediction']:.2f}")
-    metric_cols[2].metric("Best Model", best_model_name)
-    metric_cols[3].metric("Best MSE", f"{errors[best_model_name]:.2f}")
+    metric_cols[2].metric("Best MSE", f"{errors[best_model_name]:.2f}")
+    metric_cols[3].metric("Active Symbol", analysis["stock"])
 
-    st.subheader("Active Symbol")
-    st.write(f"Showing analysis for **{analysis['stock']}**.")
+    st.divider()
+    render_prediction_content(analysis)
+
+    st.divider()
+    render_chart_content(analysis)
