@@ -3,13 +3,7 @@ import streamlit as st
 from utils.app_helpers import percentage_change
 
 
-def render(analysis):
-    st.header("Prediction")
-
-    if analysis is None:
-        st.info("Analyze a stock from the dashboard to view predictions.")
-        return
-
+def render_prediction_content(analysis):
     st.subheader("Prediction Result")
     st.metric("Predicted Close Price", f"${analysis['prediction']:.2f}")
 
@@ -38,3 +32,13 @@ def render(analysis):
         st.metric("30-Day Prediction", f"${future['30']:.2f}", f"{change_30:.2f}%")
         st.progress(0.65)
         st.caption("Confidence: 65%")
+
+
+def render(analysis):
+    st.header("Prediction")
+
+    if analysis is None:
+        st.info("Analyze a stock from the dashboard to view predictions.")
+        return
+
+    render_prediction_content(analysis)
