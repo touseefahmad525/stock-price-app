@@ -4,12 +4,6 @@ from utils.app_helpers import percentage_change
 
 
 def render_prediction_content(analysis):
-    st.subheader("Prediction Result")
-    st.metric("Predicted Close Price", f"${analysis['prediction']:.2f}")
-
-    st.subheader("Current Price")
-    st.metric("Latest Close", f"${analysis['last_price']:.2f}")
-
     st.subheader("Future Price Predictions")
     future = analysis["future"]
     last_price = analysis["last_price"]

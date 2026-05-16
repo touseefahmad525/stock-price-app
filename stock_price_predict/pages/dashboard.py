@@ -8,11 +8,11 @@ from utils.app_helpers import build_stock_analysis
 def render_stock_search(current_analysis):
     with st.form("stock_search_form"):
         stock = st.text_input(
-            "Stock Symbol",
+            "Enter Stock Symbol",
             value=st.session_state.get("stock_symbol", ""),
             placeholder="AAPL, TSLA, MSFT",
         )
-        analyze = st.form_submit_button("Analyze Stock", use_container_width=True)
+        analyze = st.form_submit_button("Analyze Stock")
 
     if not analyze:
         return current_analysis
