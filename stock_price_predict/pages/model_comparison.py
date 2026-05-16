@@ -5,10 +5,10 @@ from utils.visualizations import plot_feature_importance, plot_regression_predic
 
 
 def render(analysis):
-    st.header("Model Comparison")
+    st.header("Model Evaluation")
 
     if analysis is None:
-        st.info("Analyze a stock from the dashboard to compare models.")
+        st.info("Analyze a stock from the dashboard to evaluate models.")
         return
 
     errors = analysis["errors"]
