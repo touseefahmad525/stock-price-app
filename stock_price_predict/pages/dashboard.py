@@ -6,8 +6,11 @@ from utils.app_helpers import build_stock_analysis
 
 
 def render_stock_search(current_analysis):
+    if st.session_state.pop("clear_stock_input", False):
+        st.session_state["stock_input"] = ""
+
     if "stock_input" not in st.session_state:
-        st.session_state["stock_input"] = st.session_state.get("stock_symbol", "")
+        st.session_state["stock_input"] = ""
 
     with st.form("stock_search_form"):
         st.text_input(
@@ -46,7 +49,8 @@ def render_stock_search(current_analysis):
 
     st.session_state["analysis"] = analysis
     st.session_state["stock_symbol"] = stock
-    return analysis
+    st.session_state["clear_stock_input"] = True
+    st.rerun()
 
 
 def render(analysis):
