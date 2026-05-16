@@ -82,6 +82,34 @@ def percentage_change(future_price, current_price):
     return to_float(((future_price - current_price) / current_price) * 100)
 
 
+def calculate_confidence(mse):
+    """
+    Convert model MSE into a 0-100 confidence score.
+    Lower MSE produces higher confidence.
+    """
+    mse = max(to_float(mse), 0.0)
+    confidence = 100 / (1 + mse)
+    return max(0.0, min(to_float(confidence), 100.0))
+
+
+def calculate_horizon_confidences(base_confidence):
+    """
+    Scale base model confidence by forecast horizon.
+    Longer horizons receive a larger penalty.
+    """
+    base_confidence = max(0.0, min(to_float(base_confidence), 100.0))
+    horizon_scales = {
+        "7": 1.0,
+        "14": 0.85,
+        "30": 0.70,
+    }
+
+    return {
+        horizon: max(0.0, min(base_confidence * scale, 100.0))
+        for horizon, scale in horizon_scales.items()
+    }
+
+
 def build_stock_analysis(stock):
     data = get_stock_data(stock)
 
@@ -117,12 +145,14 @@ def build_stock_analysis(stock):
     prediction = to_float(best_model.predict(latest_data))
     last_price = to_float(data["Close"].iloc[-1])
 
-    future = predict_future_prices(last_price)
+    future = predict_future_prices(last_price, data)
     future = {
         "7": to_float(future.get("7")),
         "14": to_float(future.get("14")),
         "30": to_float(future.get("30")),
     }
+    base_confidence = calculate_confidence(errors[best_model_name])
+    confidence = calculate_horizon_confidences(base_confidence)
 
     _, X_test, _, y_test = train_test_split(
         X,
@@ -144,6 +174,8 @@ def build_stock_analysis(stock):
         "last_price": last_price,
         "prediction": prediction,
         "future": future,
+        "base_confidence": base_confidence,
+        "confidence": confidence,
         "X_test": X_test,
         "y_test": y_test,
         "y_pred": y_pred,

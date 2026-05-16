@@ -3,29 +3,44 @@ import streamlit as st
 from utils.app_helpers import percentage_change
 
 
+def render_prediction_metric(label, future_price, last_price, confidence):
+    change = percentage_change(future_price, last_price)
+
+    st.metric(label, f"${future_price:.2f}", f"{change:.2f}%")
+    st.progress(confidence / 100)
+    st.caption(f"Confidence: {confidence:.2f}%")
+
+
 def render_prediction_content(analysis):
     st.subheader("Future Price Predictions")
     future = analysis["future"]
     last_price = analysis["last_price"]
+    confidence = analysis.get("confidence", {})
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        change_7 = percentage_change(future["7"], last_price)
-        st.metric("7-Day Prediction", f"${future['7']:.2f}", f"{change_7:.2f}%")
-        st.progress(0.78)
-        st.caption("Confidence: 78%")
+        render_prediction_metric(
+            "7-Day Prediction",
+            future["7"],
+            last_price,
+            confidence.get("7", 0.0),
+        )
 
     with col2:
-        change_14 = percentage_change(future["14"], last_price)
-        st.metric("14-Day Prediction", f"${future['14']:.2f}", f"{change_14:.2f}%")
-        st.progress(0.72)
-        st.caption("Confidence: 72%")
+        render_prediction_metric(
+            "14-Day Prediction",
+            future["14"],
+            last_price,
+            confidence.get("14", 0.0),
+        )
 
     with col3:
-        change_30 = percentage_change(future["30"], last_price)
-        st.metric("30-Day Prediction", f"${future['30']:.2f}", f"{change_30:.2f}%")
-        st.progress(0.65)
-        st.caption("Confidence: 65%")
+        render_prediction_metric(
+            "30-Day Prediction",
+            future["30"],
+            last_price,
+            confidence.get("30", 0.0),
+        )
 
 
 def render(analysis):
