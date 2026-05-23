@@ -5,6 +5,7 @@ from pages.prediction import render_prediction_content
 from utils.app_helpers import build_stock_analysis
 from utils.news_api import get_stock_news
 from utils.sentiment import analyze_sentiment
+from utils.recommendation import generate_recommendation
 
 
 def render_stock_search(current_analysis):
@@ -110,6 +111,30 @@ def render(analysis):
             col1.metric("👍 Positive", sentiment["positive"])
             col2.metric("👎 Negative", sentiment["negative"])
             col3.metric("😐 Neutral", sentiment["neutral"])
+
+            # -----------------------------
+            # 🤖 AI Recommendation Engine
+            # -----------------------------
+            recommendation_data = generate_recommendation(
+                analysis["last_price"],
+                analysis["prediction"],
+                sentiment,
+                analysis["confidence"]
+            )
+
+            recommendation = recommendation_data["recommendation"]
+            score = recommendation_data["score_10"]
+
+            st.write("### 🤖 AI Recommendation")
+
+            if "Buy" in recommendation:
+                st.success(f"{recommendation} | AI Score: {score}/10")
+
+            elif "Sell" in recommendation:
+                st.error(f"{recommendation} | AI Score: {score}/10")
+
+            else:
+                st.warning(f"{recommendation} | AI Score: {score}/10")
 
     except Exception as e:
         st.warning(f"Sentiment analysis failed: {e}")
