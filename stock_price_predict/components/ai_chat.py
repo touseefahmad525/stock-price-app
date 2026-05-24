@@ -1,5 +1,5 @@
 import html
-
+from utils.chatbot import get_ai_response
 import streamlit as st
 
 # ── Brand tokens ──────────────────────────────────────────────────────────────
@@ -588,10 +588,15 @@ def _render_popup():
                 {"role": "user", "text": user_message.strip()}
             )
 
+            try:
+                bot_response = get_ai_response(user_message.strip())
+            except Exception as exc:
+                bot_response = f"Chat setup error: {exc}"
+
             st.session_state.ai_chat_messages.append(
                 {
                     "role": "bot",
-                    "text": "I received your message. Full AI analysis coming soon!",
+                    "text": bot_response,
                 }
             )
 

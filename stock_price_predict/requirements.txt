@@ -8,3 +8,4 @@ plotly
 nltk
 requests
 python-dotenv
+google-genai
