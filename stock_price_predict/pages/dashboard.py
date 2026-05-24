@@ -1,3 +1,6 @@
+from html import escape
+from textwrap import dedent
+
 import streamlit as st
 
 from pages.charts_analysis import render_chart_content
@@ -6,6 +9,287 @@ from utils.app_helpers import build_stock_analysis
 from utils.news_api import get_stock_news
 from utils.sentiment import analyze_sentiment
 from utils.recommendation import generate_recommendation
+
+
+SENTIMENT_THEME = {
+    "Positive": {
+        "class": "positive",
+        "label": "Positive",
+        "accent": "#22c55e",
+    },
+    "Negative": {
+        "class": "negative",
+        "label": "Negative",
+        "accent": "#ef4444",
+    },
+    "Neutral": {
+        "class": "neutral",
+        "label": "Neutral",
+        "accent": "#94a3b8",
+    },
+}
+
+
+RECOMMENDATION_THEME = {
+    "buy": {
+        "class": "buy",
+        "label": "Buy",
+        "accent": "#22c55e",
+    },
+    "sell": {
+        "class": "sell",
+        "label": "Sell",
+        "accent": "#ef4444",
+    },
+    "hold": {
+        "class": "hold",
+        "label": "Hold",
+        "accent": "#f59e0b",
+    },
+}
+
+
+def inject_news_sentiment_styles():
+    st.markdown(
+        """
+        <style>
+        .section-kicker {
+            margin: 0 0 8px;
+            color: #cbd5e1;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0;
+        }
+
+        .news-card,
+        .sentiment-tile,
+        .recommendation-card {
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 8px;
+            background: #111827;
+            box-shadow: 0 10px 28px rgba(2, 6, 23, 0.24);
+        }
+
+        .news-card {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+        }
+
+        .news-title {
+            color: #e5e7eb;
+            font-size: 0.96rem;
+            line-height: 1.45;
+            margin: 0;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 78px;
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 0.76rem;
+            font-weight: 800;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .badge-positive,
+        .badge-buy {
+            color: #bbf7d0;
+            background: rgba(34, 197, 94, 0.16);
+            border: 1px solid rgba(34, 197, 94, 0.38);
+        }
+
+        .badge-negative,
+        .badge-sell {
+            color: #fecaca;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.38);
+        }
+
+        .badge-neutral {
+            color: #e2e8f0;
+            background: rgba(148, 163, 184, 0.15);
+            border: 1px solid rgba(148, 163, 184, 0.34);
+        }
+
+        .badge-hold {
+            color: #fde68a;
+            background: rgba(245, 158, 11, 0.16);
+            border: 1px solid rgba(245, 158, 11, 0.38);
+        }
+
+        .sentiment-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .sentiment-tile {
+            padding: 14px 16px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .sentiment-label {
+            margin-bottom: 8px;
+        }
+
+        .sentiment-count {
+            color: #f8fafc;
+            font-size: 1.75rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .recommendation-card {
+            border-left: 5px solid var(--accent);
+            padding: 18px 20px;
+        }
+
+        .recommendation-topline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .recommendation-title {
+            color: #f8fafc;
+            font-size: 1.15rem;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        .score-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            color: #cbd5e1;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .score-value {
+            color: #f8fafc;
+            font-size: 1.35rem;
+            font-weight: 900;
+        }
+
+        .score-track {
+            height: 9px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.18);
+        }
+
+        .score-fill {
+            height: 100%;
+            width: var(--score-width);
+            border-radius: 999px;
+            background: var(--accent);
+        }
+
+        @media (max-width: 760px) {
+            .news-card,
+            .recommendation-topline {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .sentiment-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def get_recommendation_action(recommendation):
+    recommendation = str(recommendation).lower()
+    for action in RECOMMENDATION_THEME:
+        if action in recommendation:
+            return action
+    return "hold"
+
+
+def render_badge(label, badge_class):
+    return f'<span class="badge badge-{badge_class}">{escape(label)}</span>'
+
+
+def render_latest_news(sentiment_details):
+    st.markdown('<p class="section-kicker">Latest News</p>', unsafe_allow_html=True)
+
+    for item in sentiment_details:
+        theme = SENTIMENT_THEME.get(item["sentiment"], SENTIMENT_THEME["Neutral"])
+        score = item.get("score", 0)
+        st.markdown(
+            dedent(f"""
+            <div class="news-card">
+                <p class="news-title">{escape(item["news"])}</p>
+                <div>
+                    {render_badge(theme["label"], theme["class"])}
+                    <div style="color:#64748b;font-size:0.72rem;font-weight:700;margin-top:7px;text-align:center;">
+                        {score:+.2f}
+                    </div>
+                </div>
+            </div>
+            """),
+            unsafe_allow_html=True,
+        )
+
+
+def render_sentiment_summary(sentiment):
+    st.markdown('<p class="section-kicker">Sentiment Summary</p>', unsafe_allow_html=True)
+
+    columns = st.columns(3)
+    for column, sentiment_name in zip(columns, ("Positive", "Negative", "Neutral")):
+        theme = SENTIMENT_THEME[sentiment_name]
+        count = sentiment.get(sentiment_name.lower(), 0)
+        tile_html = (
+            f'<div class="sentiment-tile" style="--accent:{theme["accent"]};">'
+            f'<div class="sentiment-label">{render_badge(theme["label"], theme["class"])}</div>'
+            f'<div class="sentiment-count">{count}</div>'
+            '</div>'
+        )
+        column.markdown(tile_html, unsafe_allow_html=True)
+
+
+def render_ai_recommendation(recommendation_data):
+    recommendation = recommendation_data["recommendation"]
+    score = recommendation_data["score_10"]
+    action = get_recommendation_action(recommendation)
+    theme = RECOMMENDATION_THEME[action]
+    score_width = max(0, min(score * 10, 100))
+
+    st.subheader("AI Recommendation")
+    st.markdown(
+        dedent(f"""
+        <div class="recommendation-card" style="--accent:{theme['accent']};--score-width:{score_width}%;">
+            <div class="recommendation-topline">
+                <p class="recommendation-title">{escape(theme["label"])} signal</p>
+                {render_badge(theme["label"], theme["class"])}
+            </div>
+            <div class="score-row">
+                <span>AI Score</span>
+                <span class="score-value">{score}/10</span>
+            </div>
+            <div class="score-track">
+                <div class="score-fill"></div>
+            </div>
+        </div>
+        """),
+        unsafe_allow_html=True,
+    )
 
 
 def render_stock_search(current_analysis):
@@ -80,14 +364,11 @@ def render(analysis):
 
     st.divider()
 
-    # ✅ ONLY ONE CALL (FIXED)
     render_chart_content(analysis)
 
-    # -----------------------------
-    # 📰 NEWS SENTIMENT ANALYSIS
-    # -----------------------------
     st.divider()
-    st.subheader("📰 News Sentiment Analysis")
+    st.subheader("News Sentiment Analysis")
+    inject_news_sentiment_styles()
 
     stock = st.session_state.get("stock_symbol", analysis["stock"])
 
@@ -99,42 +380,16 @@ def render(analysis):
         else:
             sentiment = analyze_sentiment(news_list)
 
-            st.write("### Latest News")
+            render_latest_news(sentiment["details"])
+            render_sentiment_summary(sentiment)
 
-            for item in sentiment["details"]:
-                st.write(f"• {item['news']} → {item['sentiment']}")
-
-            st.write("### Sentiment Summary")
-
-            col1, col2, col3 = st.columns(3)
-
-            col1.metric("👍 Positive", sentiment["positive"])
-            col2.metric("👎 Negative", sentiment["negative"])
-            col3.metric("😐 Neutral", sentiment["neutral"])
-
-            # -----------------------------
-            # 🤖 AI Recommendation Engine
-            # -----------------------------
             recommendation_data = generate_recommendation(
                 analysis["last_price"],
                 analysis["prediction"],
                 sentiment,
-                analysis["confidence"]
+                analysis["confidence"],
             )
-
-            recommendation = recommendation_data["recommendation"]
-            score = recommendation_data["score_10"]
-
-            st.write("### 🤖 AI Recommendation")
-
-            if "Buy" in recommendation:
-                st.success(f"{recommendation} | AI Score: {score}/10")
-
-            elif "Sell" in recommendation:
-                st.error(f"{recommendation} | AI Score: {score}/10")
-
-            else:
-                st.warning(f"{recommendation} | AI Score: {score}/10")
+            render_ai_recommendation(recommendation_data)
 
     except Exception as e:
         st.warning(f"Sentiment analysis failed: {e}")

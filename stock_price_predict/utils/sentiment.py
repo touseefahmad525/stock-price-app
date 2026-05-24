@@ -21,6 +21,10 @@ def analyze_sentiment(news_list):
     }
 
     for news in news_list:
+        news = str(news).strip()
+        if not news:
+            continue
+
         score = sia.polarity_scores(news)["compound"]
 
         if score >= 0.05:
