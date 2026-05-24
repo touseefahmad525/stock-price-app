@@ -58,11 +58,11 @@ def generate_recommendation(
     score_10 = round(_clamp((raw_score + 100) / 20, 0.0, 10.0), 2)
 
     if score_10 >= 7:
-        recommendation = "Buy 📈"
+        recommendation = "Buy"
     elif score_10 <= 3:
-        recommendation = "Sell 📉"
+        recommendation = "Sell"
     else:
-        recommendation = "Hold 🤝"
+        recommendation = "Hold"
 
     return {
         "recommendation": recommendation,
