@@ -1,5 +1,6 @@
 import streamlit as st
 
+from components.ai_chat import render_ai_chat
 from components.sidebar import render_sidebar
 from pages import dashboard, model_comparison
 
@@ -45,6 +46,8 @@ def main():
 
     analysis = st.session_state.get("analysis")
     PAGE_RENDERERS[selected_page](analysis)
+
+    render_ai_chat()
 
 
 if __name__ == "__main__":
